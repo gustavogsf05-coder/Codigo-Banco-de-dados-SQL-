@@ -21,20 +21,22 @@ GROUP BY a.nome_real
 ORDER BY total_musicas DESC;
 
 
--- 3ª Consulta 
+
+-- 3ª Consulta
 SELECT 
-    p.nome AS playlist,
+    DISTINCT p.nome AS playlist,
     u.nome_completo AS dono,
-    (
-        SELECT COUNT(*)
-        FROM playlists_tem_musicas ptm
-        WHERE ptm.playlist_id = p.id_playlists
-    ) AS total_musicas
+    a.nome_real AS artista,
+    m.titulo AS musica
 FROM playlists p
 JOIN usuarios u ON u.id_usuarios = p.usuario_id
-WHERE (
-        SELECT COUNT(*)
-        FROM playlists_tem_musicas ptm
-        WHERE ptm.playlist_id = p.id_playlists
-      ) > 2   -- filtro complexo (playlists com mais de 2 músicas)
-ORDER BY total_musicas DESC;
+JOIN playlists_tem_musicas ptm ON ptm.playlist_id = p.id_playlists
+JOIN musicas m ON m.id_musicas = ptm.musica_id
+JOIN musicas_artistas ma ON ma.musica_id = m.id_musicas
+JOIN artistas a ON a.id_artistas = ma.artista_id
+WHERE a.id_artistas = (
+    SELECT id_artistas 
+    FROM artistas 
+    WHERE nome_real = 'Edward Christopher Sheeran'
+)
+ORDER BY playlist, musica;
