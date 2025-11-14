@@ -1,51 +1,40 @@
--- CONSULTAS.sql
-
--- 1ª Consulta
+-- 1ª Consulta 
 SELECT 
-    musicas.titulo AS musica,
-    musicas.duracao_segundos,
-    musicas.ano_lancamento,
-    albuns.titulo AS album
-FROM musicas
-JOIN albuns ON musicas.album_id = albuns.id_albuns
-WHERE albuns.titulo = 'Divide'
-ORDER BY musicas.duracao_segundos DESC;
+    a.nome_real AS artista,
+    al.titulo AS album,
+    al.data_lancamento
+FROM artistas a
+JOIN artistas_lancam_albuns ala ON ala.artista_id = a.id_artistas
+JOIN albuns al ON al.id_albuns = ala.album_id
+WHERE al.data_lancamento IS NOT NULL
+ORDER BY a.nome_real, al.data_lancamento;
 
--- 2ª Consulta
-SELECT 
-    artistas.nome_real AS artista,
-    COUNT(musicas.id_musicas) AS total_musicas
-FROM artistas
-JOIN musicas_artistas ON artistas.id_artistas = musicas_artistas.artista_id
-JOIN musicas ON musicas_artistas.musica_id = musicas.id_musicas
-GROUP BY artistas.nome_real
+
+-- 2ª Consulta 
+SELECT
+    a.nome_real AS artista,
+    COUNT(m.id_musicas) AS total_musicas
+FROM artistas a
+JOIN musicas_artistas ma ON ma.artista_id = a.id_artistas
+JOIN musicas m ON m.id_musicas = ma.musica_id
+GROUP BY a.nome_real
 ORDER BY total_musicas DESC;
 
--- 3ª Consulta
+
+-- 3ª Consulta 
 SELECT 
-    p.id_playlists,
     p.nome AS playlist,
+    u.nome_completo AS dono,
     (
-        (SELECT SUM(m.duracao_segundos)
-         FROM playlists_tem_musicas pm
-         JOIN musicas m ON pm.musica_id = m.id_musicas
-         WHERE pm.playlist_id = p.id_playlists)
-        +
-        (SELECT SUM(ep.duracao_segundos)
-         FROM playlists_tem_episodios pe
-         JOIN episodios ep ON pe.episodio_id = ep.id_episodios
-         WHERE pe.playlist_id = p.id_playlists)
-    ) AS duracao_total
+        SELECT COUNT(*)
+        FROM playlists_tem_musicas ptm
+        WHERE ptm.playlist_id = p.id_playlists
+    ) AS total_musicas
 FROM playlists p
+JOIN usuarios u ON u.id_usuarios = p.usuario_id
 WHERE (
-        (SELECT SUM(m.duracao_segundos)
-         FROM playlists_tem_musicas pm
-         JOIN musicas m ON pm.musica_id = m.id_musicas
-         WHERE pm.playlist_id = p.id_playlists)
-        +
-        (SELECT SUM(ep.duracao_segundos)
-         FROM playlists_tem_episodios pe
-         JOIN episodios ep ON pe.episodio_id = ep.id_episodios
-         WHERE pe.playlist_id = p.id_playlists)
-    ) > 3600
-ORDER BY duracao_total DESC;
+        SELECT COUNT(*)
+        FROM playlists_tem_musicas ptm
+        WHERE ptm.playlist_id = p.id_playlists
+      ) > 2   -- filtro complexo (playlists com mais de 2 músicas)
+ORDER BY total_musicas DESC;
