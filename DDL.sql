@@ -1,6 +1,24 @@
--- DDL.sql
--- Seção 1: Criação das Tabelas (DDL)
+DROP TABLE IF EXISTS usuarios_ouvem_episodios CASCADE;
+DROP TABLE IF EXISTS usuarios_ouvem_musicas CASCADE;
+DROP TABLE IF EXISTS playlists_tem_episodios CASCADE;
+DROP TABLE IF EXISTS playlists_tem_musicas CASCADE;
+DROP TABLE IF EXISTS musicas_artistas CASCADE;
+DROP TABLE IF EXISTS artistas_lancam_albuns CASCADE;
+DROP TABLE IF EXISTS playlists CASCADE;
+DROP TABLE IF EXISTS enderecos CASCADE;
+DROP TABLE IF EXISTS episodios CASCADE;
+DROP TABLE IF EXISTS podcasts CASCADE;
+DROP TABLE IF EXISTS musicas CASCADE;
+DROP TABLE IF EXISTS albuns CASCADE;
+DROP TABLE IF EXISTS podcasters CASCADE;
+DROP TABLE IF EXISTS compositores CASCADE;
+DROP TABLE IF EXISTS musicos CASCADE;
+DROP TABLE IF EXISTS artistas CASCADE;
+DROP TABLE IF EXISTS gravadoras CASCADE;
+DROP TABLE IF EXISTS usuarios CASCADE;
 
+
+-- 1. Tabelas Principais
 CREATE TABLE usuarios (
     id_usuarios SERIAL PRIMARY KEY,
     nome_completo VARCHAR(255) NOT NULL,
@@ -21,6 +39,7 @@ CREATE TABLE artistas (
     pais_origem VARCHAR(100)
 );
 
+-- 2. Tabelas de Especialização (Subclasses de Artista)
 CREATE TABLE musicos (
     artista_id INT PRIMARY KEY,
     nome_artistico VARCHAR(150) NOT NULL UNIQUE
@@ -37,6 +56,7 @@ CREATE TABLE podcasters (
     artista_id INT NOT NULL
 );
 
+-- 3. Tabelas de Conteúdo
 CREATE TABLE albuns (
     id_albuns SERIAL PRIMARY KEY,
     titulo VARCHAR(200) NOT NULL,
@@ -70,6 +90,7 @@ CREATE TABLE episodios (
     podcast_id INT NOT NULL
 );
 
+-- 4. Tabelas de Usuário
 CREATE TABLE enderecos (
     id_enderecos SERIAL PRIMARY KEY,
     rua VARCHAR(255),
@@ -85,6 +106,7 @@ CREATE TABLE playlists (
     usuario_id INT NOT NULL
 );
 
+-- 5. Tabelas de Relacionamentos N:N
 CREATE TABLE artistas_lancam_albuns (
     artista_id INT NOT NULL,
     album_id INT NOT NULL,
@@ -111,6 +133,7 @@ CREATE TABLE playlists_tem_episodios (
     PRIMARY KEY (playlist_id, episodio_id)
 );
 
+-- 6. Tabelas de Histórico
 CREATE TABLE usuarios_ouvem_musicas (
     usuario_id INT NOT NULL,
     musica_id INT NOT NULL,
@@ -125,34 +148,93 @@ CREATE TABLE usuarios_ouvem_episodios (
     PRIMARY KEY (usuario_id, episodio_id, data_hora_play)
 );
 
--- Seção 2: Chaves Estrangeiras
+-- Seção 2: Criação das Chaves Estrangeiras 
 
-ALTER TABLE musicos ADD FOREIGN KEY (artista_id) REFERENCES artistas(id_artistas);
-ALTER TABLE compositores ADD FOREIGN KEY (artista_id) REFERENCES artistas(id_artistas);
-ALTER TABLE podcasters ADD FOREIGN KEY (artista_id) REFERENCES artistas(id_artistas);
 
-ALTER TABLE albuns ADD FOREIGN KEY (gravadora_id) REFERENCES gravadoras(id_gravadoras);
-ALTER TABLE musicas ADD FOREIGN KEY (album_id) REFERENCES albuns(id_albuns);
-ALTER TABLE podcasts ADD FOREIGN KEY (podcaster_id) REFERENCES podcasters(id_podcasters);
-ALTER TABLE episodios ADD FOREIGN KEY (podcast_id) REFERENCES podcasts(id_podcasts);
+ALTER TABLE musicos 
+    ADD CONSTRAINT fk_musicos_artista 
+    FOREIGN KEY (artista_id) REFERENCES artistas(id_artistas);
 
-ALTER TABLE enderecos ADD FOREIGN KEY (usuario_id) REFERENCES usuarios(id_usuarios);
-ALTER TABLE playlists ADD FOREIGN KEY (usuario_id) REFERENCES usuarios(id_usuarios);
+ALTER TABLE compositores 
+    ADD CONSTRAINT fk_compositores_artista 
+    FOREIGN KEY (artista_id) REFERENCES artistas(id_artistas);
 
-ALTER TABLE artistas_lancam_albuns ADD FOREIGN KEY (artista_id) REFERENCES artistas(id_artistas);
-ALTER TABLE artistas_lancam_albuns ADD FOREIGN KEY (album_id) REFERENCES albuns(id_albuns);
+ALTER TABLE podcasters 
+    ADD CONSTRAINT fk_podcasters_artista 
+    FOREIGN KEY (artista_id) REFERENCES artistas(id_artistas);
 
-ALTER TABLE musicas_artistas ADD FOREIGN KEY (musica_id) REFERENCES musicas(id_musicas);
-ALTER TABLE musicas_artistas ADD FOREIGN KEY (artista_id) REFERENCES artistas(id_artistas);
+-- 2. Conteúdo
+ALTER TABLE albuns 
+    ADD CONSTRAINT fk_albuns_gravadora 
+    FOREIGN KEY (gravadora_id) REFERENCES gravadoras(id_gravadoras);
 
-ALTER TABLE playlists_tem_musicas ADD FOREIGN KEY (playlist_id) REFERENCES playlists(id_playlists);
-ALTER TABLE playlists_tem_musicas ADD FOREIGN KEY (musica_id) REFERENCES musicas(id_musicas);
+ALTER TABLE musicas 
+    ADD CONSTRAINT fk_musicas_album 
+    FOREIGN KEY (album_id) REFERENCES albuns(id_albuns);
 
-ALTER TABLE playlists_tem_episodios ADD FOREIGN KEY (playlist_id) REFERENCES playlists(id_playlists);
-ALTER TABLE playlists_tem_episodios ADD FOREIGN KEY (episodio_id) REFERENCES episodios(id_episodios);
+ALTER TABLE podcasts 
+    ADD CONSTRAINT fk_podcasts_podcaster 
+    FOREIGN KEY (podcaster_id) REFERENCES podcasters(id_podcasters);
 
-ALTER TABLE usuarios_ouvem_musicas ADD FOREIGN KEY (usuario_id) REFERENCES usuarios(id_usuarios);
-ALTER TABLE usuarios_ouvem_musicas ADD FOREIGN KEY (musica_id) REFERENCES musicas(id_musicas);
+ALTER TABLE episodios 
+    ADD CONSTRAINT fk_episodios_podcast 
+    FOREIGN KEY (podcast_id) REFERENCES podcasts(id_podcasts);
 
-ALTER TABLE usuarios_ouvem_episodios ADD FOREIGN KEY (usuario_id) REFERENCES usuarios(id_usuarios);
-ALTER TABLE usuarios_ouvem_episodios ADD FOREIGN KEY (episodio_id) REFERENCES episodios(id_episodios);
+-- 3. Usuários
+ALTER TABLE enderecos 
+    ADD CONSTRAINT fk_enderecos_usuario 
+    FOREIGN KEY (usuario_id) REFERENCES usuarios(id_usuarios);
+
+ALTER TABLE playlists 
+    ADD CONSTRAINT fk_playlists_usuario 
+    FOREIGN KEY (usuario_id) REFERENCES usuarios(id_usuarios);
+
+-- 4. Relacionamentos N:N
+ALTER TABLE artistas_lancam_albuns 
+    ADD CONSTRAINT fk_ala_artista 
+    FOREIGN KEY (artista_id) REFERENCES artistas(id_artistas);
+
+ALTER TABLE artistas_lancam_albuns 
+    ADD CONSTRAINT fk_ala_album 
+    FOREIGN KEY (album_id) REFERENCES albuns(id_albuns);
+
+ALTER TABLE musicas_artistas 
+    ADD CONSTRAINT fk_ma_musica 
+    FOREIGN KEY (musica_id) REFERENCES musicas(id_musicas);
+
+ALTER TABLE musicas_artistas 
+    ADD CONSTRAINT fk_ma_artista 
+    FOREIGN KEY (artista_id) REFERENCES artistas(id_artistas);
+
+ALTER TABLE playlists_tem_musicas 
+    ADD CONSTRAINT fk_ptm_playlist 
+    FOREIGN KEY (playlist_id) REFERENCES playlists(id_playlists);
+
+ALTER TABLE playlists_tem_musicas 
+    ADD CONSTRAINT fk_ptm_musica 
+    FOREIGN KEY (musica_id) REFERENCES musicas(id_musicas);
+
+ALTER TABLE playlists_tem_episodios 
+    ADD CONSTRAINT fk_pte_playlist 
+    FOREIGN KEY (playlist_id) REFERENCES playlists(id_playlists);
+
+ALTER TABLE playlists_tem_episodios 
+    ADD CONSTRAINT fk_pte_episodio 
+    FOREIGN KEY (episodio_id) REFERENCES episodios(id_episodios);
+
+-- 5. Histórico
+ALTER TABLE usuarios_ouvem_musicas 
+    ADD CONSTRAINT fk_uom_usuario 
+    FOREIGN KEY (usuario_id) REFERENCES usuarios(id_usuarios);
+
+ALTER TABLE usuarios_ouvem_musicas 
+    ADD CONSTRAINT fk_uom_musica 
+    FOREIGN KEY (musica_id) REFERENCES musicas(id_musicas);
+
+ALTER TABLE usuarios_ouvem_episodios 
+    ADD CONSTRAINT fk_uoe_usuario 
+    FOREIGN KEY (usuario_id) REFERENCES usuarios(id_usuarios);
+
+ALTER TABLE usuarios_ouvem_episodios 
+    ADD CONSTRAINT fk_uoe_episodio 
+    FOREIGN KEY (episodio_id) REFERENCES episodios(id_episodios);
